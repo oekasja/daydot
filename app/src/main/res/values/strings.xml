@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Life Tracker</string>
+    <string name="app_name">DayDot</string>
     <string name="prompt_text">Share the moment you want to remember most from today...</string>
     <string name="modify_entry_title">Entry Exists</string>
     <string name="modify_entry_msg">You have already documented today. Do you want to modify your entry?</string>

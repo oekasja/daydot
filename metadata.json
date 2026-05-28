@@ -1,5 +1,5 @@
 {
-  "name": "Life Tracker",
+  "name": "DayDot",
   "description": "A minimalist life-tracking and journaling app focusing on days lived and days remaining.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Life Tracker</string>
+    <string name="app_name">DayDot</string>
     <string name="prompt_text">Ceritakan momen yang paling ingin kamu ingat dari hari ini...</string>
     <string name="modify_entry_title">Entri Sudah Ada</string>
     <string name="modify_entry_msg">Anda sudah mencatat hari ini. Apakah Anda ingin mengubah entri Anda?</string>
