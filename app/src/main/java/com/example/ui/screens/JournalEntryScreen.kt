@@ -48,6 +48,8 @@ fun JournalEntryScreen(
     var storyText by remember { mutableStateOf("") }
     var selectedVibe by remember { mutableStateOf<String?>(null) }
     
+    val isError = storyText.length > 280
+
     // Attempt to load existing entry
     val existingEntry by viewModel.getEntryByDate(date).collectAsState(initial = null)
     
@@ -97,9 +99,12 @@ fun JournalEntryScreen(
                         )
                         onBack()
                     },
+                    enabled = !isError,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                     ),
                     modifier = Modifier.padding(end = 8.dp),
                     shape = RoundedCornerShape(12.dp)
@@ -175,32 +180,48 @@ fun JournalEntryScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            OutlinedTextField(
-                value = storyText,
-                onValueChange = { storyText = it },
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(bottom = 24.dp),
-                placeholder = { 
-                    Text(
-                        text = stringResource(id = R.string.prompt_text), 
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                        fontSize = 18.sp
-                    ) 
-                },
-                textStyle = LocalTextStyle.current.copy(
-                    fontSize = 18.sp,
-                    lineHeight = 28.sp,
-                    color = MaterialTheme.colorScheme.onBackground
-                ),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    disabledBorderColor = Color.Transparent,
-                    cursorColor = MaterialTheme.colorScheme.primary
+                    .padding(bottom = 24.dp)
+            ) {
+                OutlinedTextField(
+                    value = storyText,
+                    onValueChange = { storyText = it },
+                    modifier = Modifier.fillMaxSize(),
+                    placeholder = { 
+                        Text(
+                            text = stringResource(id = R.string.prompt_text), 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                            fontSize = 18.sp
+                        ) 
+                    },
+                    textStyle = LocalTextStyle.current.copy(
+                        fontSize = 18.sp,
+                        lineHeight = 28.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    ),
+                    isError = isError,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = if(isError) MaterialTheme.colorScheme.error else Color.Transparent,
+                        unfocusedBorderColor = if(isError) MaterialTheme.colorScheme.error else Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
+                        errorBorderColor = MaterialTheme.colorScheme.error,
+                        cursorColor = MaterialTheme.colorScheme.primary
+                    )
                 )
-            )
+                
+                Text(
+                    text = "${storyText.length} / 280",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 16.dp, end = 16.dp)
+                )
+            }
         }
     }
 }
