@@ -144,21 +144,6 @@ fun HomeScreen(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "JD",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
         }
 
@@ -241,7 +226,7 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(end = 8.dp, bottom = 8.dp)
+                .padding(end = 16.dp, bottom = 32.dp)
                 .zIndex(10f),
             contentAlignment = Alignment.CenterEnd
         ) {

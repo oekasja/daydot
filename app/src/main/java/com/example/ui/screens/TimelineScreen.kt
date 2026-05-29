@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -90,40 +91,66 @@ fun TimelineScreen(
     if (showBottomSheet && selectedEntry != null) {
         ModalBottomSheet(
             onDismissRequest = { showBottomSheet = false },
-            sheetState = sheetState
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+            dragHandle = { BottomSheetDefaults.DragHandle() }
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             ) {
-                Button(
-                    onClick = {
-                        showBottomSheet = false
-                        onNavigateToEntry(selectedEntry!!.date)
-                    },
-                    modifier = Modifier.fillMaxWidth().height(64.dp),
-                    shape = RoundedCornerShape(16.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showBottomSheet = false
+                            onNavigateToEntry(selectedEntry!!.date)
+                        }
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                    Icon(
+                        imageVector = Icons.Default.Edit, 
+                        contentDescription = "Edit",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                     Spacer(modifier = Modifier.width(16.dp))
-                    Text(stringResource(id = R.string.edit_entry), fontSize = 20.sp)
+                    Text(
+                        text = stringResource(id = R.string.edit_entry), 
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable {
+                            showBottomSheet = false
+                            showDeleteDialog = true
+                        }
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete, 
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(
+                        text = stringResource(id = R.string.delete_entry), 
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                Spacer(modifier = Modifier.navigationBarsPadding())
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        showBottomSheet = false
-                        showDeleteDialog = true
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.fillMaxWidth().height(64.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(stringResource(id = R.string.delete_entry), fontSize = 20.sp)
-                }
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -155,7 +182,6 @@ fun TimelineScreen(
         
         LazyColumn(
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             if (entries.isEmpty()) {
@@ -197,7 +223,10 @@ fun TimelineScreen(
                         shape = RoundedCornerShape(20.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.padding(20.dp)) {
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            verticalArrangement = Arrangement.Center
+                        ) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -210,20 +239,25 @@ fun TimelineScreen(
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     letterSpacing = 1.sp
                                 )
-                                TextButton(
-                                    onClick = { viewModel.fetchRandomEntry() },
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .clickable { viewModel.fetchRandomEntry() }
+                                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Refresh, 
                                         contentDescription = "Refresh",
                                         tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(14.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = stringResource(id = R.string.see_another_day), 
                                         fontSize = 12.sp, 
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                             }
@@ -234,7 +268,10 @@ fun TimelineScreen(
                                 lineHeight = 22.sp
                             )
                             Spacer(modifier = Modifier.height(12.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 Text(
                                     text = stringResource(id = R.string.vibe_was),
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -248,7 +285,6 @@ fun TimelineScreen(
                                 )
                                 val labelRes = getVibeLabelRes(memory.vibeColor)
                                 val labelStr = labelRes?.let { stringResource(id = it) } ?: "Recorded"
-                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = labelStr,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -259,13 +295,19 @@ fun TimelineScreen(
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(8.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        text = "PAST LOGS",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 1.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
-            items(entries.sortedByDescending { it.date }) { entry ->
+            itemsIndexed(entries.sortedByDescending { it.date }) { index, entry ->
                 val displayDate = try {
                     LocalDate.parse(entry.date).format(DateTimeFormatter.ofPattern("MMMM d, yyyy"))
                 } catch (e: Exception) {
@@ -288,38 +330,68 @@ fun TimelineScreen(
                 val labelStr = labelRes?.let { stringResource(id = it) } ?: "Recorded"
 
                 Row(
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min)
+                        .clip(RoundedCornerShape(16.dp))
                         .clickable { 
                             selectedEntry = entry
                             showBottomSheet = true 
                         }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.Top
+                        .padding(horizontal = 8.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxHeight().width(24.dp)
+                    ) {
+                        if (index == 0) {
+                            Spacer(modifier = Modifier.height(20.dp))
+                        } else {
                             Box(
                                 modifier = Modifier
-                                    .size(12.dp)
-                                    .clip(CircleShape)
-                                    .background(blendedColor)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "$labelStr  •  $dateLabel",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                    .width(1.dp)
+                                    .height(20.dp)
+                                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                             )
                         }
+                        
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(blendedColor)
+                        )
+                        
+                        if (index == entries.size - 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .width(1.dp)
+                                    .weight(1f)
+                                    .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.width(12.dp))
+                    
+                    Column(modifier = Modifier.weight(1f).padding(vertical = 16.dp)) {
+                        Text(
+                            text = "$labelStr  •  $dateLabel",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = entry.textStory,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            lineHeight = 20.sp
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            lineHeight = 22.sp
                         )
                     }
                 }

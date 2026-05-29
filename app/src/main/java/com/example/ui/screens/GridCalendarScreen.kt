@@ -21,7 +21,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -147,38 +150,51 @@ fun GithubStyleYearGrid(
     year: Int, 
     entries: List<DailyEntry>, 
     selectedDate: LocalDate?,
+    today: LocalDate,
     onDateClick: (LocalDate) -> Unit
 ) {
-    val entriesByDate = entries.filter { it.date.startsWith("$year-") }.associateBy { it.date }
-    val firstDayOfYear = LocalDate.of(year, 1, 1)
-    val daysOffset = firstDayOfYear.dayOfWeek.value - 1 // 0 for Monday, 6 for Sunday
+    val entriesByDate = remember(year, entries) { 
+        entries.filter { it.date.startsWith("$year-") }.associateBy { it.date } 
+    }
+    
+    val weeks = remember(year) {
+        val firstDayOfYear = LocalDate.of(year, 1, 1)
+        val daysOffset = firstDayOfYear.dayOfWeek.value - 1 // 0 for Monday, 6 for Sunday
 
-    val totalDays = firstDayOfYear.lengthOfYear()
-    val totalCells = daysOffset + totalDays
-    val totalWeeks = Math.ceil(totalCells / 7.0).toInt()
+        val totalDays = firstDayOfYear.lengthOfYear()
+        val totalCells = daysOffset + totalDays
+        val totalWeeks = Math.ceil(totalCells / 7.0).toInt()
 
-    val weeks = (0 until totalWeeks).map { weekIndex ->
-        (0..6).map { dayIndex ->
-            val cellIndex = weekIndex * 7 + dayIndex
-            val dayOfYear = cellIndex - daysOffset + 1
-            if (dayOfYear in 1..totalDays) {
-                firstDayOfYear.plusDays((dayOfYear - 1).toLong())
-            } else {
-                null
+        (0 until totalWeeks).map { weekIndex ->
+            (0..6).map { dayIndex ->
+                val cellIndex = weekIndex * 7 + dayIndex
+                val dayOfYear = cellIndex - daysOffset + 1
+                if (dayOfYear in 1..totalDays) {
+                    firstDayOfYear.plusDays((dayOfYear - 1).toLong())
+                } else {
+                    null
+                }
             }
         }
     }
 
-    var lastMonth = -1
-    val monthLabels = weeks.map { week ->
-        val firstDate = week.firstOrNull { it != null }
-        if (firstDate != null && firstDate.monthValue != lastMonth) {
-            lastMonth = firstDate.monthValue
-            firstDate.format(DateTimeFormatter.ofPattern("MMM", java.util.Locale.getDefault())).lowercase().replaceFirstChar { it.uppercase() }
-        } else {
-            ""
+    val monthLabels = remember(year, weeks) {
+        var lastMonth = -1
+        weeks.map { week ->
+            val firstDate = week.firstOrNull { it != null }
+            if (firstDate != null && firstDate.monthValue != lastMonth) {
+                lastMonth = firstDate.monthValue
+                firstDate.format(DateTimeFormatter.ofPattern("MMM", java.util.Locale.getDefault())).lowercase().replaceFirstChar { it.uppercase() }
+            } else {
+                ""
+            }
         }
     }
+
+    val dashedPathEffect = remember { PathEffect.dashPathEffect(floatArrayOf(8f, 4f), 0f) }
+    val outlineVariant = MaterialTheme.colorScheme.outlineVariant
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val primaryColor = MaterialTheme.colorScheme.primary
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -210,7 +226,7 @@ fun GithubStyleYearGrid(
             }
         }
 
-        items(weeks.size) { index ->
+        items(count = weeks.size, key = { index -> "${year}_$index" }) { index ->
             val week = weeks[index]
             val monthLabel = monthLabels[index]
             
@@ -227,25 +243,41 @@ fun GithubStyleYearGrid(
                         val dateString = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
                         val entry = entriesByDate[dateString]
                         val isSelected = date == selectedDate
+                        val isFuture = year == today.year && date.isAfter(today)
                         
                         val isEmpty = entry == null
                         val boxColor = entry?.vibeColor?.let {
                             Color(android.graphics.Color.parseColor(it))
-                        } ?: MaterialTheme.colorScheme.surfaceVariant
+                        } ?: surfaceVariant
 
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(boxColor)
                                 .run {
-                                    if (isSelected) {
-                                        border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp))
-                                    } else if (isEmpty) {
-                                        border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp))
-                                    } else this
+                                    if (isFuture) {
+                                        drawBehind {
+                                            drawRoundRect(
+                                                color = outlineVariant.copy(alpha = 0.5f),
+                                                style = Stroke(width = 1.dp.toPx(), pathEffect = dashedPathEffect),
+                                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                                            )
+                                            drawRoundRect(
+                                                color = outlineVariant.copy(alpha = 0.05f),
+                                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                                            )
+                                        }
+                                    } else {
+                                        background(boxColor).run {
+                                            if (isSelected) {
+                                                border(2.dp, primaryColor, RoundedCornerShape(4.dp))
+                                            } else if (isEmpty) {
+                                                border(1.dp, outlineVariant.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
+                                            } else this
+                                        }
+                                    }
                                 }
-                                .clickable { onDateClick(date) }
+                                .clickable(enabled = !isFuture) { onDateClick(date) }
                         )
                     } else {
                         Spacer(modifier = Modifier.size(24.dp))
@@ -362,7 +394,7 @@ fun GridCalendarScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(yearsList) { year ->
+            items(yearsList, key = { it }) { year ->
                 val isExpanded = expandedYears.contains(year)
                 val daysLived = computeDaysLivedInYear(year, dob, today)
                 
@@ -381,6 +413,7 @@ fun GridCalendarScreen(
                             year = year,
                             entries = entries,
                             selectedDate = selectedDate,
+                            today = today,
                             onDateClick = { 
                                 selectedDate = it
                             }

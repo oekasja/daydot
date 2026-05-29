@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
@@ -98,7 +99,6 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String) 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .drawBehind {
                 drawLine(
@@ -108,6 +108,8 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String) 
                     strokeWidth = 1.dp.toPx()
                 )
             }
+            .navigationBarsPadding()
+            .height(80.dp)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
