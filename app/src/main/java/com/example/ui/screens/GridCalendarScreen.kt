@@ -145,19 +145,27 @@ fun SelectedDayInfoPanel(
     }
 }
 
+data class GridCellData(
+    val date: LocalDate,
+    val isSelected: Boolean,
+    val isGhost: Boolean,
+    val color: Color,
+    val isEmpty: Boolean
+)
+
 @Composable
 fun GithubStyleYearGrid(
     year: Int, 
     entries: List<DailyEntry>, 
     selectedDate: LocalDate?,
     today: LocalDate,
+    birthDate: LocalDate?,
     onDateClick: (LocalDate) -> Unit
 ) {
-    val entriesByDate = remember(year, entries) { 
-        entries.filter { it.date.startsWith("$year-") }.associateBy { it.date } 
-    }
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
     
-    val weeks = remember(year) {
+    val weeks = remember(year, entries, selectedDate, today, birthDate, surfaceVariant) {
+        val entriesByDate = entries.filter { it.date.startsWith("$year-") }.associateBy { it.date } 
         val firstDayOfYear = LocalDate.of(year, 1, 1)
         val daysOffset = firstDayOfYear.dayOfWeek.value - 1 // 0 for Monday, 6 for Sunday
 
@@ -170,7 +178,27 @@ fun GithubStyleYearGrid(
                 val cellIndex = weekIndex * 7 + dayIndex
                 val dayOfYear = cellIndex - daysOffset + 1
                 if (dayOfYear in 1..totalDays) {
-                    firstDayOfYear.plusDays((dayOfYear - 1).toLong())
+                    val date = firstDayOfYear.plusDays((dayOfYear - 1).toLong())
+                    val dateString = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    val entry = entriesByDate[dateString]
+                    
+                    val isSelected = date == selectedDate
+                    val isFuture = date.isAfter(today)
+                    val isBeforeBirth = birthDate != null && date.isBefore(birthDate)
+                    val isGhost = isFuture || isBeforeBirth
+
+                    val isEmpty = entry == null
+                    val boxColor = entry?.vibeColor?.let {
+                        Color(android.graphics.Color.parseColor(it))
+                    } ?: surfaceVariant
+
+                    GridCellData(
+                        date = date,
+                        isSelected = isSelected,
+                        isGhost = isGhost,
+                        color = boxColor,
+                        isEmpty = isEmpty
+                    )
                 } else {
                     null
                 }
@@ -181,7 +209,7 @@ fun GithubStyleYearGrid(
     val monthLabels = remember(year, weeks) {
         var lastMonth = -1
         weeks.map { week ->
-            val firstDate = week.firstOrNull { it != null }
+            val firstDate = week.firstOrNull { it != null }?.date
             if (firstDate != null && firstDate.monthValue != lastMonth) {
                 lastMonth = firstDate.monthValue
                 firstDate.format(DateTimeFormatter.ofPattern("MMM", java.util.Locale.getDefault())).lowercase().replaceFirstChar { it.uppercase() }
@@ -193,7 +221,6 @@ fun GithubStyleYearGrid(
 
     val dashedPathEffect = remember { PathEffect.dashPathEffect(floatArrayOf(8f, 4f), 0f) }
     val outlineVariant = MaterialTheme.colorScheme.outlineVariant
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
     val primaryColor = MaterialTheme.colorScheme.primary
 
     LazyRow(
@@ -238,46 +265,44 @@ fun GithubStyleYearGrid(
                     modifier = Modifier.height(16.dp)
                 )
 
-                for (date in week) {
-                    if (date != null) {
-                        val dateString = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
-                        val entry = entriesByDate[dateString]
-                        val isSelected = date == selectedDate
-                        val isFuture = year == today.year && date.isAfter(today)
-                        
-                        val isEmpty = entry == null
-                        val boxColor = entry?.vibeColor?.let {
-                            Color(android.graphics.Color.parseColor(it))
-                        } ?: surfaceVariant
-
-                        Box(
+                for (cell in week) {
+                    if (cell != null) {
+                        Spacer(
                             modifier = Modifier
                                 .size(24.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .run {
-                                    if (isFuture) {
-                                        drawBehind {
-                                            drawRoundRect(
-                                                color = outlineVariant.copy(alpha = 0.5f),
-                                                style = Stroke(width = 1.dp.toPx(), pathEffect = dashedPathEffect),
-                                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
-                                            )
-                                            drawRoundRect(
-                                                color = outlineVariant.copy(alpha = 0.05f),
-                                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
-                                            )
-                                        }
+                                .drawBehind {
+                                    val cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+                                    if (cell.isGhost) {
+                                        drawRoundRect(
+                                            color = outlineVariant.copy(alpha = 0.5f),
+                                            style = Stroke(width = 1.dp.toPx(), pathEffect = dashedPathEffect),
+                                            cornerRadius = cornerRadius
+                                        )
+                                        drawRoundRect(
+                                            color = outlineVariant.copy(alpha = 0.05f),
+                                            cornerRadius = cornerRadius
+                                        )
                                     } else {
-                                        background(boxColor).run {
-                                            if (isSelected) {
-                                                border(2.dp, primaryColor, RoundedCornerShape(4.dp))
-                                            } else if (isEmpty) {
-                                                border(1.dp, outlineVariant.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
-                                            } else this
+                                        drawRoundRect(
+                                            color = cell.color,
+                                            cornerRadius = cornerRadius
+                                        )
+                                        if (cell.isSelected) {
+                                            drawRoundRect(
+                                                color = primaryColor,
+                                                style = Stroke(width = 2.dp.toPx()),
+                                                cornerRadius = cornerRadius
+                                            )
+                                        } else if (cell.isEmpty) {
+                                            drawRoundRect(
+                                                color = outlineVariant.copy(alpha = 0.6f),
+                                                style = Stroke(width = 1.dp.toPx()),
+                                                cornerRadius = cornerRadius
+                                            )
                                         }
                                     }
                                 }
-                                .clickable(enabled = !isFuture) { onDateClick(date) }
+                                .clickable(enabled = !cell.isGhost) { onDateClick(cell.date) }
                         )
                     } else {
                         Spacer(modifier = Modifier.size(24.dp))
@@ -408,12 +433,13 @@ fun GridCalendarScreen(
                         }
                     )
 
-                    AnimatedVisibility(visible = isExpanded) {
+                    if (isExpanded) {
                         GithubStyleYearGrid(
                             year = year,
                             entries = entries,
                             selectedDate = selectedDate,
                             today = today,
+                            birthDate = dob,
                             onDateClick = { 
                                 selectedDate = it
                             }
