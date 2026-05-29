@@ -29,8 +29,10 @@ import androidx.compose.ui.graphics.Color
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import kotlin.random.Random
 
+/**
+ * Calculates the exact day of life dynamically given a user's date of birth and a target entry date.
+ */
 fun getDayOfLife(dobString: String?, dateString: String): Long? {
     if (dobString == null) return null
     return try {
@@ -43,6 +45,10 @@ fun getDayOfLife(dobString: String?, dateString: String): Long? {
     }
 }
 
+/**
+ * TimelineScreen renders a chronological feed of all recorded life moments.
+ * It visualizes a "random memory" hero component on top and a vertically connected line layout below.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimelineScreen(

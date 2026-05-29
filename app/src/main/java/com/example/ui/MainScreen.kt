@@ -22,12 +22,12 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.List
-import androidx.compose.material.icons.outlined.ViewList
+import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
@@ -163,8 +163,8 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String) 
         // We'll use a placeholder icon for Timeline, e.g. ViewList
         BottomNavItem(
             label = "TIMELINE",
-            icon = Icons.Filled.ViewList,
-            iconOutlined = Icons.Outlined.ViewList,
+            icon = Icons.AutoMirrored.Filled.ViewList,
+            iconOutlined = Icons.AutoMirrored.Outlined.ViewList,
             isSelected = currentRoute == Routes.TIMELINE,
             onClick = {
                 navController.navigate(Routes.TIMELINE) {

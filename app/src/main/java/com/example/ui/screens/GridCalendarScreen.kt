@@ -1,11 +1,7 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -37,6 +33,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
+/**
+ * Computes the number of lived days within a specific calendar year.
+ */
 fun computeDaysLivedInYear(year: Int, dob: LocalDate?, today: LocalDate): Long {
     if (dob == null) return 0
     val startOfYear = LocalDate.of(year, 1, 1)
@@ -47,12 +46,18 @@ fun computeDaysLivedInYear(year: Int, dob: LocalDate?, today: LocalDate): Long {
     return ChronoUnit.DAYS.between(start, end) + 1
 }
 
+/**
+ * Computes the sequential day number of a target date relative to the user's date of birth.
+ */
 fun computeDayOfLife(dob: LocalDate?, target: LocalDate): Long? {
     if (dob == null) return null
     if (target.isBefore(dob)) return null
     return ChronoUnit.DAYS.between(dob, target) + 1
 }
 
+/**
+ * Maps the daily entry color hex to its corresponding localized string resource label.
+ */
 fun getVibeLabelRes(hex: String?): Int? {
     return when (hex?.uppercase()) {
         "#A8DADC" -> R.string.vibe_peaceful
@@ -153,6 +158,11 @@ data class GridCellData(
     val isEmpty: Boolean
 )
 
+/**
+ * A structurally optimized heat-map calendar representing a single year.
+ * Renders localized blocks dynamically through drawBehind to eliminate layout overhead and applies
+ * boundary logic (ghosting future days and pre-birth days) aligned with dual-theme capabilities.
+ */
 @Composable
 fun GithubStyleYearGrid(
     year: Int, 
@@ -364,7 +374,7 @@ fun YearCard(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GridCalendarScreen(
     viewModel: MainViewModel,
