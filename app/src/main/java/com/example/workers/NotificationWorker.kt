@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -36,6 +37,7 @@ class NotificationWorker(
             }
         }
 
+        Log.d("NotificationWorker", "Preparing notification: $type")
         createNotificationChannel()
 
         val title: String
@@ -47,6 +49,7 @@ class NotificationWorker(
             val lifespanInt = userPrefsRepo.userLifespan.first()
 
             if (dobString.isNullOrEmpty()) {
+                Log.e("NotificationWorker", "DOB is missing for morning notification")
                 return Result.failure()
             }
 
@@ -60,6 +63,7 @@ class NotificationWorker(
                 title = "Daily Life Update"
                 message = "You have lived $daysLived days. You have $daysRemaining days left. Make it count."
             } catch (e: Exception) {
+                Log.e("NotificationWorker", "Error calculating days", e)
                 return Result.failure()
             }
         } else {
@@ -67,14 +71,32 @@ class NotificationWorker(
             message = "Time to document your day and capture your vibe."
         }
 
-        val notification = NotificationCompat.Builder(applicationContext, "daily_life_channel")
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .build()
+        try {
+            val intent = android.content.Intent(applicationContext, MainActivity::class.java).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            val pendingIntent = android.app.PendingIntent.getActivity(
+                applicationContext,
+                0,
+                intent,
+                android.app.PendingIntent.FLAG_IMMUTABLE
+            )
 
-        NotificationManagerCompat.from(applicationContext).notify(type.hashCode(), notification)
+            val notification = NotificationCompat.Builder(applicationContext, "daily_life_channel")
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true)
+                .build()
+
+            NotificationManagerCompat.from(applicationContext).notify(type.hashCode(), notification)
+            Log.d("NotificationWorker", "Notification posted successfully")
+        } catch (e: Exception) {
+            Log.e("NotificationWorker", "Failed to post notification", e)
+            return Result.failure()
+        }
 
         return Result.success()
     }
